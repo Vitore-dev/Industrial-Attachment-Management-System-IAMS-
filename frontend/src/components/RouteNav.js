@@ -1,10 +1,4 @@
-const routes = [
-  { id: 'login', label: 'Login' },
-  { id: 'register', label: 'Register' },
-  { id: 'account', label: 'Account' },
-];
-
-function RouteNav({ route }) {
+function RouteNav({ route, routes }) {
   return (
     <nav className="route-nav" aria-label="Application sections">
       {routes.map((item) => (

@@ -1,304 +1,231 @@
+import { createContext, startTransition, useContext, useEffect, useState } from 'react';
 import {
-  createContext,
-  startTransition,
-  useContext,
-  useEffect,
-  useRef,
-  useState,
-} from 'react';
+  createEmptyLoginForm,
+  createEmptyRegisterForm,
+  createUpdatedUser,
+  createUserFromRegistration,
+  createSeedUsers,
+  formatRole,
+  getProfileCompletion,
+  getUserDisplayName,
+  normalizeUserRecord,
+  roleOptions,
+  setByPath,
+  toggleListValue,
+} from '../data/mockData';
 
-const API_BASE_URL =
-  process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000/api/accounts';
-
-const emptyRegisterForm = {
-  username: '',
-  email: '',
-  password: '',
-  role: 'student',
-  phone_number: '',
-};
-
-const emptyLoginForm = {
-  username: '',
-  password: '',
-};
+const USERS_STORAGE_KEY = 'iams_frontend_users_v2';
+const SESSION_STORAGE_KEY = 'iams_frontend_session_v2';
 
 const AuthContext = createContext(null);
 
-const roleOptions = [
-  { value: 'student', label: 'Student' },
-  { value: 'organization', label: 'Organization' },
-  { value: 'coordinator', label: 'Coordinator' },
-  { value: 'university_supervisor', label: 'University Supervisor' },
-  { value: 'industrial_supervisor', label: 'Industrial Supervisor' },
-];
+const defaultStatus = {
+  type: 'info',
+  message:
+    'Sprint 1 frontend demo mode: registration, profiles, and dashboard data are stored locally in this browser until backend APIs are ready.',
+};
 
 export function AuthProvider({ children }) {
-  const [loginForm, setLoginForm] = useState(emptyLoginForm);
-  const [registerForm, setRegisterForm] = useState(emptyRegisterForm);
-  const [tokens, setTokens] = useState(() => getStoredTokens());
-  const [currentUser, setCurrentUser] = useState(null);
-  const [status, setStatus] = useState({
-    type: 'idle',
-    message: 'Connect the app to the accounts backend by logging in or registering.',
-  });
+  const [users, setUsers] = useState(loadUsers);
+  const [sessionUserId, setSessionUserId] = useState(loadSessionUserId);
+  const [loginForm, setLoginForm] = useState(createEmptyLoginForm);
+  const [registerForm, setRegisterForm] = useState(createEmptyRegisterForm);
+  const [status, setStatus] = useState(defaultStatus);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isLoadingUser, setIsLoadingUser] = useState(false);
-  const refreshPromiseRef = useRef(null);
+
+  const currentUser = users.find((user) => user.id === sessionUserId) || null;
+  const demoAccounts = users.slice(0, 5).map((user) => ({
+    id: user.id,
+    username: user.username,
+    password: user.password,
+    role: user.role,
+    label: getUserDisplayName(user),
+  }));
 
   useEffect(() => {
-    function handleHashChange() {
-      if (!currentUser && isProtectedRoute(window.location.hash.replace('#', ''))) {
-        window.location.hash = '#login';
-      }
+    localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(users));
+  }, [users]);
+
+  useEffect(() => {
+    if (currentUser) {
+      localStorage.setItem(SESSION_STORAGE_KEY, currentUser.id);
+      return;
     }
 
-    handleHashChange();
-    window.addEventListener('hashchange', handleHashChange);
-    return () => window.removeEventListener('hashchange', handleHashChange);
+    localStorage.removeItem(SESSION_STORAGE_KEY);
   }, [currentUser]);
 
   useEffect(() => {
-    if (!tokens?.access) {
-      setCurrentUser(null);
-      return;
+    if (sessionUserId && !currentUser) {
+      setSessionUserId(null);
     }
+  }, [currentUser, sessionUserId]);
 
-    loadCurrentUser();
-  }, [tokens]);
-
-  async function request(endpoint, options = {}) {
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-      ...options,
-      headers: {
-        'Content-Type': 'application/json',
-        ...(options.headers || {}),
-      },
-    });
-
-    const data = await response.json().catch(() => ({}));
-
-    if (!response.ok) {
-      const error = new Error(getErrorMessage(data));
-      error.status = response.status;
-      throw error;
-    }
-
-    return data;
-  }
-
-  async function authRequest(endpoint, options = {}, allowRetry = true) {
-    if (!tokens?.access) {
-      throw new Error('You need to log in first.');
-    }
-
-    try {
-      return await request(endpoint, {
-        ...options,
-        headers: {
-          Accept: 'application/json',
-          ...(options.headers || {}),
-          Authorization: `Bearer ${tokens.access}`,
-        },
-      });
-    } catch (error) {
-      if (error.status !== 401 || !allowRetry || !tokens?.refresh) {
-        throw error;
-      }
-
-      const refreshedTokens = await refreshAccessToken();
-
-      return request(endpoint, {
-        ...options,
-        headers: {
-          Accept: 'application/json',
-          ...(options.headers || {}),
-          Authorization: `Bearer ${refreshedTokens.access}`,
-        },
-      });
-    }
-  }
-
-  async function refreshAccessToken() {
-    if (!tokens?.refresh) {
-      throw new Error('No refresh token available.');
-    }
-
-    if (!refreshPromiseRef.current) {
-      refreshPromiseRef.current = request('/token/refresh/', {
-        method: 'POST',
-        body: JSON.stringify({ refresh: tokens.refresh }),
-      })
-        .then((data) => {
-          const nextTokens = {
-            access: data.access,
-            refresh: data.refresh || tokens.refresh,
-          };
-
-          saveTokens(nextTokens);
-          setStatus({
-            type: 'success',
-            message: 'Session refreshed automatically.',
-          });
-          return nextTokens;
-        })
-        .catch((error) => {
-          clearSession();
-          setStatus({
-            type: 'error',
-            message: `Session expired. ${error.message}`,
-          });
-          throw error;
-        })
-        .finally(() => {
-          refreshPromiseRef.current = null;
-        });
-    }
-
-    return refreshPromiseRef.current;
-  }
-
-  function saveTokens(nextTokens) {
-    localStorage.setItem('iams_access_token', nextTokens.access);
-    localStorage.setItem('iams_refresh_token', nextTokens.refresh);
-    setTokens(nextTokens);
-  }
-
-  function clearSession() {
-    localStorage.removeItem('iams_access_token');
-    localStorage.removeItem('iams_refresh_token');
-    setTokens(null);
-    setCurrentUser(null);
-  }
-
-  async function loadCurrentUser() {
-    setIsLoadingUser(true);
-
-    try {
-      const user = await authRequest('/me/');
-
-      startTransition(() => {
-        setCurrentUser(user);
-        setStatus({
-          type: 'success',
-          message: `Signed in as ${user.username}.`,
-        });
-      });
-    } catch (error) {
-      setStatus({
-        type: 'error',
-        message: `Could not load your account. ${error.message}`,
-      });
-    } finally {
-      setIsLoadingUser(false);
-    }
-  }
-
-  function updateLoginForm(event) {
-    const { name, value } = event.target;
+  function updateLoginField(name, value) {
     setLoginForm((current) => ({ ...current, [name]: value }));
   }
 
-  function updateRegisterForm(event) {
-    const { name, value } = event.target;
-    setRegisterForm((current) => ({ ...current, [name]: value }));
+  function updateRegisterField(path, value) {
+    setRegisterForm((current) => setByPath(current, path, value));
   }
 
-  async function login(event) {
+  function updateRegisterRole(role) {
+    setRegisterForm((current) => ({
+      ...createEmptyRegisterForm(role),
+      username: current.username,
+      email: current.email,
+      password: current.password,
+      phone_number: current.phone_number,
+      role,
+    }));
+  }
+
+  function toggleRegisterSelection(path, value) {
+    setRegisterForm((current) => toggleListValue(current, path, value));
+  }
+
+  function fillDemoCredentials(userId) {
+    const selectedUser = users.find((user) => user.id === userId);
+
+    if (!selectedUser) {
+      return;
+    }
+
+    setLoginForm({
+      username: selectedUser.username,
+      password: selectedUser.password,
+    });
+    setStatus({
+      type: 'info',
+      message: `Loaded demo credentials for ${getUserDisplayName(selectedUser)} (${formatRole(selectedUser.role)}).`,
+    });
+    window.location.hash = '#login';
+  }
+
+  function login(event) {
     event.preventDefault();
     setIsSubmitting(true);
-    setStatus({ type: 'idle', message: 'Signing in...' });
 
-    try {
-      const data = await request('/login/', {
-        method: 'POST',
-        body: JSON.stringify(loginForm),
+    const matchedUser = users.find(
+      (user) =>
+        user.username.toLowerCase() === loginForm.username.trim().toLowerCase() &&
+        user.password === loginForm.password,
+    );
+
+    if (!matchedUser) {
+      setStatus({
+        type: 'error',
+        message: 'No local demo account matched that username and password.',
       });
+      setIsSubmitting(false);
+      return;
+    }
 
-      saveTokens({ access: data.access, refresh: data.refresh });
-      setLoginForm(emptyLoginForm);
-      window.location.hash = '#account';
+    startTransition(() => {
+      setSessionUserId(matchedUser.id);
+      setLoginForm(createEmptyLoginForm());
       setStatus({
         type: 'success',
-        message: `${data.message} Role: ${formatRole(data.role)}.`,
+        message: `Signed in as ${getUserDisplayName(matchedUser)} (${formatRole(matchedUser.role)}).`,
       });
-    } catch (error) {
-      setStatus({ type: 'error', message: error.message });
-    } finally {
-      setIsSubmitting(false);
-    }
+    });
+
+    window.location.hash = `#${getHomeRouteForRole(matchedUser.role)}`;
+    setIsSubmitting(false);
   }
 
-  async function register(event) {
+  function register(event) {
     event.preventDefault();
     setIsSubmitting(true);
-    setStatus({ type: 'idle', message: 'Creating account...' });
 
-    try {
-      const data = await request('/register/', {
-        method: 'POST',
-        body: JSON.stringify(registerForm),
+    const normalizedUsername = registerForm.username.trim().toLowerCase();
+    const normalizedEmail = registerForm.email.trim().toLowerCase();
+
+    const duplicateUser = users.find(
+      (user) =>
+        user.username.toLowerCase() === normalizedUsername ||
+        user.email.toLowerCase() === normalizedEmail,
+    );
+
+    if (duplicateUser) {
+      setStatus({
+        type: 'error',
+        message: 'That username or email is already stored in the local demo data.',
       });
+      setIsSubmitting(false);
+      return;
+    }
 
-      saveTokens({ access: data.access, refresh: data.refresh });
-      setRegisterForm(emptyRegisterForm);
-      window.location.hash = '#account';
+    const nextUser = createUserFromRegistration(registerForm);
+
+    startTransition(() => {
+      setUsers((current) => [nextUser, ...current]);
+      setSessionUserId(nextUser.id);
+      setRegisterForm(createEmptyRegisterForm(nextUser.role));
       setStatus({
         type: 'success',
-        message: `${data.message} Role: ${formatRole(data.role)}.`,
+        message: `${formatRole(nextUser.role)} account created. Finish the profile details before Sprint 2 matching begins.`,
       });
-    } catch (error) {
-      setStatus({ type: 'error', message: error.message });
-    } finally {
-      setIsSubmitting(false);
-    }
+    });
+
+    window.location.hash = `#${getPostRegistrationRoute(nextUser.role)}`;
+    setIsSubmitting(false);
   }
 
-  async function logout() {
-    if (!tokens?.refresh) {
-      clearSession();
+  function logout() {
+    setSessionUserId(null);
+    setStatus({
+      type: 'info',
+      message: 'Signed out. Your Sprint 1 demo data is still stored locally.',
+    });
+    window.location.hash = '#login';
+  }
+
+  function saveCurrentUserProfile(draft) {
+    if (!currentUser) {
       return;
     }
 
     setIsSubmitting(true);
-    setStatus({ type: 'idle', message: 'Signing out...' });
 
-    try {
-      await authRequest('/logout/', {
-        method: 'POST',
-        body: JSON.stringify({ refresh: tokens.refresh }),
-      });
-    } catch (error) {
-      setStatus({ type: 'error', message: error.message });
-    } finally {
-      clearSession();
-      window.location.hash = '#login';
-      setIsSubmitting(false);
+    startTransition(() => {
+      setUsers((current) =>
+        current.map((user) =>
+          user.id === currentUser.id ? createUpdatedUser(user, draft) : user,
+        ),
+      );
       setStatus({
-        type: 'idle',
-        message: 'You have been signed out locally.',
+        type: 'success',
+        message: `${formatRole(currentUser.role)} profile updated successfully.`,
       });
-    }
+    });
+
+    setIsSubmitting(false);
   }
 
   const value = {
-    apiBaseUrl: API_BASE_URL,
-    authRequest,
     currentUser,
+    demoAccounts,
+    fillDemoCredentials,
     formatDateTime,
-    isLoadingUser,
+    formatRole,
+    getProfileCompletion,
+    getUserDisplayName,
+    isLoadingUser: false,
     isSubmitting,
-    loadCurrentUser,
     login,
     loginForm,
     logout,
     register,
     registerForm,
     roleOptions,
+    saveCurrentUserProfile,
     status,
-    tokens,
-    updateLoginForm,
-    updateRegisterForm,
+    toggleRegisterSelection,
+    updateLoginField,
+    updateRegisterField,
+    updateRegisterRole,
+    users,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
@@ -314,48 +241,38 @@ export function useAuth() {
   return context;
 }
 
-function getErrorMessage(data) {
-  if (typeof data === 'string') {
-    return data;
-  }
+function loadUsers() {
+  try {
+    const storedUsers = localStorage.getItem(USERS_STORAGE_KEY);
 
-  if (data.error) {
-    return data.error;
-  }
+    if (!storedUsers) {
+      return createSeedUsers();
+    }
 
-  if (data.message) {
-    return data.message;
-  }
+    const parsedUsers = JSON.parse(storedUsers);
 
-  const firstEntry = Object.entries(data)[0];
-  if (!firstEntry) {
-    return 'Something went wrong while contacting the server.';
-  }
+    if (!Array.isArray(parsedUsers) || !parsedUsers.length) {
+      return createSeedUsers();
+    }
 
-  const [, value] = firstEntry;
-  if (Array.isArray(value)) {
-    return value[0];
+    return parsedUsers.map(normalizeUserRecord);
+  } catch (error) {
+    return createSeedUsers();
   }
-
-  return String(value);
 }
 
-function getStoredTokens() {
-  const access = localStorage.getItem('iams_access_token');
-  const refresh = localStorage.getItem('iams_refresh_token');
-
-  return access && refresh ? { access, refresh } : null;
+function loadSessionUserId() {
+  return localStorage.getItem(SESSION_STORAGE_KEY);
 }
 
-function isProtectedRoute(route) {
-  return ['account'].includes(route);
+function getHomeRouteForRole(role) {
+  return role === 'coordinator' ? 'dashboard' : 'account';
 }
 
-export function formatRole(role) {
-  return role
-    .split('_')
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
+function getPostRegistrationRoute(role) {
+  return role === 'student' || role === 'organization'
+    ? 'profile'
+    : getHomeRouteForRole(role);
 }
 
 function formatDateTime(value) {
@@ -364,6 +281,7 @@ function formatDateTime(value) {
   }
 
   const date = new Date(value);
+
   if (Number.isNaN(date.getTime())) {
     return value;
   }
