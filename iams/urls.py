@@ -25,4 +25,5 @@ urlpatterns = [
     path('api/organizations/', include('organizations.urls')),
     path('api/students/', include('students.urls')),
     path('api/dashboard/', include('dashboard.urls')),
+    path('api/matching/', include('matching.urls')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

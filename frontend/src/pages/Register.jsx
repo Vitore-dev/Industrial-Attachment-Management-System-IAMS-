@@ -1,12 +1,14 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import api from '../services/api';
+import { useAuth } from '../context/AuthContext';
+import { getRegistrationRouteForRole } from '../utils/roleRoutes';
 import './Auth.css';
 
 export default function Register() {
   const navigate = useNavigate();
+  const { register } = useAuth();
   const [form, setForm] = useState({
-    username: '', email: '', password: '', role: '', phone_number: '',
+    username: '', email: '', password: '', role: '', phone_number: '', student_id: '',
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -15,17 +17,12 @@ export default function Register() {
     e.preventDefault();
     setLoading(true);
     setError('');
-    const data = await api.register(form);
+    const result = await register(form);
     setLoading(false);
-    if (data.access) {
-      localStorage.setItem('access_token', data.access);
-      localStorage.setItem('refresh_token', data.refresh);
-      if (data.role === 'student') navigate('/student/setup');
-      else if (data.role === 'organization') navigate('/organization/setup');
-      else navigate('/dashboard');
+    if (result.success) {
+      navigate(getRegistrationRouteForRole(result.role));
     } else {
-      const errMsg = Object.values(data).flat().join(' ');
-      setError(errMsg || 'Registration failed');
+      setError(result.error);
     }
   };
 
@@ -104,6 +101,18 @@ export default function Register() {
                 <option value="industrial_supervisor">Industrial Supervisor</option>
               </select>
             </div>
+            {form.role === 'student' && (
+              <div className="form-group">
+                <label>School Student ID</label>
+                <input
+                  type="text"
+                  placeholder="Enter the student ID from the school system"
+                  value={form.student_id}
+                  onChange={(e) => setForm({ ...form, student_id: e.target.value })}
+                  required
+                />
+              </div>
+            )}
             <button type="submit" className="auth-btn" disabled={loading}>
               {loading ? 'Creating account...' : 'Create Account'}
             </button>

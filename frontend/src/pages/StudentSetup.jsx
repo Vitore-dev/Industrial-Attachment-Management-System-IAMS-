@@ -1,10 +1,12 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import './Profile.css';
 
 export default function StudentSetup() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [form, setForm] = useState({
     student_id: '', first_name: '', last_name: '',
     year_of_study: '', department: '',
@@ -13,6 +15,18 @@ export default function StudentSetup() {
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const isVerifiedStudent = Boolean(user?.is_school_verified && user?.verified_student_id);
+
+  useEffect(() => {
+    if (!user) return;
+
+    setForm((current) => ({
+      ...current,
+      student_id: user.verified_student_id || current.student_id,
+      first_name: user.first_name || current.first_name,
+      last_name: user.last_name || current.last_name,
+    }));
+  }, [user]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -62,8 +76,19 @@ export default function StudentSetup() {
             <div className="form-row">
               <div className="form-group">
                 <label>Student ID</label>
-                <input type="text" placeholder="e.g. 202201524" value={form.student_id}
-                  onChange={(e) => setForm({ ...form, student_id: e.target.value })} required />
+                <input
+                  type="text"
+                  placeholder="e.g. 202201524"
+                  value={form.student_id}
+                  onChange={(e) => setForm({ ...form, student_id: e.target.value })}
+                  readOnly={isVerifiedStudent}
+                  required
+                />
+                {isVerifiedStudent && (
+                  <small className="label-hint">
+                    Verified from the school registration system.
+                  </small>
+                )}
               </div>
               <div className="form-group">
                 <label>Year of Study</label>

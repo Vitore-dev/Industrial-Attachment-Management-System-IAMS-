@@ -367,3 +367,248 @@ body { font-family: 'DM Sans', sans-serif; background: var(--bg); }
 
 .dash-content { animation: fadeIn 0.3s ease; }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+.matching-banner {
+  margin-bottom: 20px;
+  padding: 14px 18px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  font-size: 14px;
+}
+
+.matching-banner.success {
+  background: #ecfdf5;
+  border-color: #a7f3d0;
+  color: #166534;
+}
+
+.matching-banner.error {
+  background: #fef2f2;
+  border-color: #fecaca;
+  color: #991b1b;
+}
+
+.matching-toolbar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.matching-subtitle {
+  color: var(--text-muted);
+  font-size: 14px;
+  line-height: 1.5;
+  max-width: 640px;
+}
+
+.matching-btn {
+  background: var(--primary);
+  color: var(--white);
+  border: none;
+  border-radius: 10px;
+  padding: 12px 18px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.matching-btn:hover {
+  background: var(--accent);
+  color: var(--primary);
+}
+
+.matching-btn.secondary {
+  width: 100%;
+  margin-top: 10px;
+}
+
+.matching-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.matching-stats-grid {
+  margin-top: 24px;
+}
+
+.matching-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+  margin-top: 24px;
+}
+
+.matching-card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.matching-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.matching-card-header h3 {
+  font-family: 'Syne', sans-serif;
+  font-size: 20px;
+  color: var(--text);
+  margin-bottom: 6px;
+}
+
+.matching-card-header p {
+  color: var(--text-muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.matching-skills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.skill-chip {
+  background: var(--accent-light);
+  color: var(--primary);
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.suggestion-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.suggestion-item {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 16px;
+  background: #fcfdfd;
+}
+
+.suggestion-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.suggestion-top strong {
+  display: block;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+
+.suggestion-top p {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.suggestion-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.recommended-pill {
+  background: rgba(0, 200, 150, 0.12);
+  color: var(--accent);
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.suggestion-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 14px 0 10px;
+}
+
+.matching-muted {
+  color: var(--text-muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.override-panel {
+  border-top: 1px solid var(--border);
+  padding-top: 18px;
+}
+
+.override-panel h4 {
+  font-family: 'Syne', sans-serif;
+  font-size: 15px;
+  color: var(--text);
+  margin-bottom: 12px;
+}
+
+.override-panel select,
+.override-panel input {
+  width: 100%;
+  margin-bottom: 10px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  color: var(--text);
+  background: var(--white);
+}
+
+.override-panel select:focus,
+.override-panel input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(0, 200, 150, 0.08);
+}
+
+@media (max-width: 1200px) {
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .matching-grid,
+  .dash-tables {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 900px) {
+  .dash-sidebar {
+    position: static;
+    width: 100%;
+    height: auto;
+  }
+
+  .dash-container {
+    flex-direction: column;
+  }
+
+  .dash-main {
+    margin-left: 0;
+    padding: 24px;
+  }
+
+  .dash-header,
+  .matching-toolbar,
+  .matching-card-header,
+  .suggestion-top {
+    flex-direction: column;
+  }
+}

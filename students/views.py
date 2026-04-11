@@ -28,7 +28,22 @@ class CreateStudentProfileView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        serializer = StudentProfileSerializer(data=request.data)
+        payload = request.data.copy()
+        verified_student_id = getattr(request.user, 'verified_student_id', None)
+        if verified_student_id:
+            provided_student_id = payload.get('student_id')
+            if provided_student_id and provided_student_id != verified_student_id:
+                return Response(
+                    {
+                        'student_id': [
+                            'Student ID must match the verified school registration record.'
+                        ]
+                    },
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            payload['student_id'] = verified_student_id
+
+        serializer = StudentProfileSerializer(data=payload)
         if serializer.is_valid():
             serializer.save(user=request.user)
             return Response({

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
+import { getHomeRouteForRole } from '../utils/roleRoutes';
 import './Auth.css';
 
 export default function Login() {
@@ -17,10 +18,7 @@ export default function Login() {
     const result = await login(form.username, form.password);
     setLoading(false);
     if (result.success) {
-      if (result.role === 'coordinator') navigate('/dashboard');
-      else if (result.role === 'student') navigate('/student/profile');
-      else if (result.role === 'organization') navigate('/organization/profile');
-      else navigate('/dashboard');
+      navigate(getHomeRouteForRole(result.role));
     } else {
       setError(result.error);
     }

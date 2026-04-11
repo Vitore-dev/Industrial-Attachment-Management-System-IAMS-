@@ -7,6 +7,8 @@ import StudentSetup from './pages/StudentSetup';
 import StudentProfile from './pages/StudentProfile';
 import OrganizationSetup from './pages/OrganizationSetup';
 import OrganizationProfile from './pages/OrganizationProfile';
+import SupervisorDashboard from './pages/SupervisorDashboard';
+import { getHomeRouteForRole } from './utils/roleRoutes';
 
 const ProtectedRoute = ({ children, allowedRoles }) => {
   const { user, loading } = useAuth();
@@ -19,7 +21,9 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
     </div>
   );
   if (!user) return <Navigate to="/login" />;
-  if (allowedRoles && !allowedRoles.includes(user.role)) return <Navigate to="/login" />;
+  if (allowedRoles && !allowedRoles.includes(user.role)) {
+    return <Navigate to={getHomeRouteForRole(user.role)} />;
+  }
   return children;
 };
 
@@ -30,10 +34,7 @@ function AppRoutes() {
     <Routes>
       <Route path="/" element={
         user ? (
-          user.role === 'coordinator' ? <Navigate to="/dashboard" /> :
-          user.role === 'student' ? <Navigate to="/student/profile" /> :
-          user.role === 'organization' ? <Navigate to="/organization/profile" /> :
-          <Navigate to="/login" />
+          <Navigate to={getHomeRouteForRole(user.role)} />
         ) : <Navigate to="/login" />
       } />
       <Route path="/login" element={<Login />} />
@@ -61,6 +62,11 @@ function AppRoutes() {
       <Route path="/organization/profile" element={
         <ProtectedRoute allowedRoles={['organization']}>
           <OrganizationProfile />
+        </ProtectedRoute>
+      } />
+      <Route path="/supervisor" element={
+        <ProtectedRoute allowedRoles={['university_supervisor', 'industrial_supervisor']}>
+          <SupervisorDashboard />
         </ProtectedRoute>
       } />
       <Route path="*" element={<Navigate to="/login" />} />

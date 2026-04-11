@@ -8,6 +8,7 @@ from rest_framework.permissions import IsAuthenticated
 from accounts.models import CustomUser
 from students.models import StudentProfile
 from organizations.models import OrganizationProfile
+from matching.models import MatchAssignment, MatchSuggestion
 
 
 class CoordinatorDashboardView(APIView):
@@ -84,6 +85,15 @@ class CoordinatorDashboardView(APIView):
                 'total_organization_profiles': total_organization_profiles,
                 'approved_organizations': approved_organizations,
                 'pending_organizations': pending_organizations,
+            },
+            'matching_statistics': {
+                'confirmed_matches': MatchAssignment.objects.count(),
+                'students_pending_match': StudentProfile.objects.filter(
+                    is_placed=False
+                ).count(),
+                'students_with_suggestions': MatchSuggestion.objects.values(
+                    'student_id'
+                ).distinct().count(),
             },
             'recent_students': list(recent_students),
             'recent_organizations': list(recent_organizations),

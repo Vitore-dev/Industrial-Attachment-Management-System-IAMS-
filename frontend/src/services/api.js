@@ -127,6 +127,55 @@ const api = {
     return res.json();
   },
 
+  // Matching
+  runMatching: async () => {
+    const res = await fetch(`${BASE_URL}/matching/run/`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${getToken()}`,
+      },
+    });
+    return res.json();
+  },
+
+  getMatchSuggestions: async () => {
+    const res = await fetch(`${BASE_URL}/matching/suggestions/`, {
+      headers: { Authorization: `Bearer ${getToken()}` },
+    });
+    return res.json();
+  },
+
+  getMatchAssignments: async () => {
+    const res = await fetch(`${BASE_URL}/matching/assignments/`, {
+      headers: { Authorization: `Bearer ${getToken()}` },
+    });
+    return res.json();
+  },
+
+  confirmMatch: async (suggestionId) => {
+    const res = await fetch(`${BASE_URL}/matching/confirm/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${getToken()}`,
+      },
+      body: JSON.stringify({ suggestion_id: suggestionId }),
+    });
+    return res.json();
+  },
+
+  overrideMatch: async (data) => {
+    const res = await fetch(`${BASE_URL}/matching/override/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${getToken()}`,
+      },
+      body: JSON.stringify(data),
+    });
+    return res.json();
+  },
+
   // Dashboard
   getDashboard: async () => {
     const res = await fetch(`${BASE_URL}/dashboard/coordinator/`, {
