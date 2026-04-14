@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
+import NotificationPanel from '../components/NotificationPanel';
 import './Profile.css';
 
 export default function OrganizationProfile() {
@@ -73,6 +74,12 @@ export default function OrganizationProfile() {
             {editing ? 'Cancel' : 'Edit Profile'}
           </button>
         </div>
+
+        <NotificationPanel
+          title="Approval Notifications"
+          subtitle="See whether your organization is approved and ready for placement."
+          items={profile?.notifications || []}
+        />
 
         {!editing ? (
           <div className="profile-view">

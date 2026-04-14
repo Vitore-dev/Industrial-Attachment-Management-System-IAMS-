@@ -1,7 +1,4 @@
 from django.contrib import admin
-
-# Register your models here.
-from django.contrib import admin
 from .models import CustomUser, SchoolStudentRecord
 
 
@@ -11,11 +8,14 @@ class CustomUserAdmin(admin.ModelAdmin):
         'username',
         'email',
         'role',
-        'verified_student_id',
-        'is_school_verified',
+        'registered_student_id',
     )
-    list_filter = ('role', 'is_school_verified')
+    list_filter = ('role',)
     search_fields = ('username', 'email', 'verified_student_id')
+
+    @admin.display(description='Student ID')
+    def registered_student_id(self, obj):
+        return obj.verified_student_id or '-'
 
 
 @admin.register(SchoolStudentRecord)

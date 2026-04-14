@@ -4,20 +4,19 @@ This diagram gives a clean high-level view of how the Industrial Attachment Mana
 
 ```mermaid
 flowchart TD
-    A["Start: User accesses IAMS"] --> B{"Has an account?"}
+    A["Start: User accesses ASAS or IAMS"] --> B{"Has an account?"}
 
-    B -->|No| C["Register account"]
+    B -->|No| C["Choose registration portal"]
     B -->|Yes| D["Log in"]
 
-    C --> E{"Select role"}
-    E -->|Student| F["Submit account details and student ID"]
-    E -->|Organization| G["Create organization account"]
-    E -->|Coordinator| H["Create coordinator account"]
-    E -->|Supervisor| I["Create supervisor account"]
+    C --> E{"Registration type"}
+    E -->|Student| F["Register in ASAS with student ID and email"]
+    E -->|Organization| G["Create organization account in IAMS"]
+    E -->|Coordinator| H["Create coordinator account in IAMS"]
+    E -->|Supervisor| I["Create supervisor account in IAMS"]
 
-    F --> J{"Exists in school registry?"}
-    J -->|No| K["Block registration"]
-    J -->|Yes| D
+    F --> J["ASAS saves attachment registration and sends student to IAMS"]
+    J --> D
 
     G --> D
     H --> D

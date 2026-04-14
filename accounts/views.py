@@ -1,11 +1,9 @@
-from django.shortcuts import render
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import authenticate
-from .models import CustomUser
 from .serializers import RegisterSerializer, LoginSerializer, UserSerializer
 
 
@@ -17,6 +15,16 @@ class RegisterView(APIView):
         serializer = RegisterSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.save()
+            if user.role == 'student':
+                return Response({
+                    'message': (
+                        'Industrial attachment registration successful. '
+                        'Sign in to complete your student profile.'
+                    ),
+                    'role': user.role,
+                    'requires_login': True,
+                }, status=status.HTTP_201_CREATED)
+
             refresh = RefreshToken.for_user(user)
             return Response({
                 'message': 'Registration successful',

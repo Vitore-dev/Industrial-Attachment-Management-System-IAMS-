@@ -4,11 +4,22 @@ import { useAuth } from '../context/AuthContext';
 import { getRegistrationRouteForRole } from '../utils/roleRoutes';
 import './Auth.css';
 
+const NON_STUDENT_ROLES = [
+  { value: 'organization', label: 'Organization' },
+  { value: 'coordinator', label: 'Coordinator' },
+  { value: 'university_supervisor', label: 'University Supervisor' },
+  { value: 'industrial_supervisor', label: 'Industrial Supervisor' },
+];
+
 export default function Register() {
   const navigate = useNavigate();
   const { register } = useAuth();
   const [form, setForm] = useState({
-    username: '', email: '', password: '', role: '', phone_number: '', student_id: '',
+    username: '',
+    email: '',
+    password: '',
+    role: '',
+    phone_number: '',
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -17,7 +28,9 @@ export default function Register() {
     e.preventDefault();
     setLoading(true);
     setError('');
+
     const result = await register(form);
+
     setLoading(false);
     if (result.success) {
       navigate(getRegistrationRouteForRole(result.role));
@@ -30,20 +43,25 @@ export default function Register() {
     <div className="auth-container">
       <div className="auth-left">
         <div className="auth-brand">
-          <div className="brand-icon">⬡</div>
+          <div className="brand-icon">&#9633;</div>
           <h1>IAMS</h1>
           <p>Industrial Attachment<br />Management System</p>
         </div>
         <div className="auth-tagline">
-          <h2>Begin your journey</h2>
-          <p>University of Botswana — Department of Computer Science</p>
+          <h2>Set up your IAMS access</h2>
+          <p>Organization, coordinator, and supervisor accounts are created directly in IAMS.</p>
         </div>
       </div>
       <div className="auth-right">
         <div className="auth-card">
+          <div className="auth-pill">IAMS Portal</div>
           <h2>Create account</h2>
-          <p className="auth-subtitle">Register to get started</p>
+          <p className="auth-subtitle">Register your role-specific account to access the platform.</p>
           {error && <div className="auth-error">{error}</div>}
+          <div className="auth-notice">
+            <strong>Students use ASAS.</strong> Student attachment registration happens in the ASAS portal first.
+            <Link to="/asas/register"> Open ASAS student registration</Link>
+          </div>
           <form onSubmit={handleSubmit}>
             <div className="form-row">
               <div className="form-group">
@@ -94,27 +112,13 @@ export default function Register() {
                 required
               >
                 <option value="">-- Select your role --</option>
-                <option value="student">Student</option>
-                <option value="organization">Organization</option>
-                <option value="coordinator">Coordinator</option>
-                <option value="university_supervisor">University Supervisor</option>
-                <option value="industrial_supervisor">Industrial Supervisor</option>
+                {NON_STUDENT_ROLES.map((role) => (
+                  <option key={role.value} value={role.value}>{role.label}</option>
+                ))}
               </select>
             </div>
-            {form.role === 'student' && (
-              <div className="form-group">
-                <label>School Student ID</label>
-                <input
-                  type="text"
-                  placeholder="Enter the student ID from the school system"
-                  value={form.student_id}
-                  onChange={(e) => setForm({ ...form, student_id: e.target.value })}
-                  required
-                />
-              </div>
-            )}
             <button type="submit" className="auth-btn" disabled={loading}>
-              {loading ? 'Creating account...' : 'Create Account'}
+              {loading ? 'Creating account...' : 'Create IAMS Account'}
             </button>
           </form>
           <p className="auth-link">

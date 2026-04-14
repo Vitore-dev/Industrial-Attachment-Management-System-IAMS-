@@ -89,6 +89,15 @@ export const AuthProvider = ({ children }) => {
         );
       }
 
+      if (data?.role && data?.message) {
+        return {
+          success: true,
+          role: data.role,
+          requiresLogin: Boolean(data.requires_login),
+          message: data.message,
+        };
+      }
+
       return {
         success: false,
         error: formatAuthError(data, 'Registration failed'),

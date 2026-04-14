@@ -1,6 +1,3 @@
-from django.shortcuts import render
-
-# Create your views here.
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -29,19 +26,19 @@ class CreateStudentProfileView(APIView):
             )
 
         payload = request.data.copy()
-        verified_student_id = getattr(request.user, 'verified_student_id', None)
-        if verified_student_id:
+        registered_student_id = getattr(request.user, 'verified_student_id', None)
+        if registered_student_id:
             provided_student_id = payload.get('student_id')
-            if provided_student_id and provided_student_id != verified_student_id:
+            if provided_student_id and provided_student_id != registered_student_id:
                 return Response(
                     {
                         'student_id': [
-                            'Student ID must match the verified school registration record.'
+                            'Student ID must match the ID used during attachment registration.'
                         ]
                     },
                     status=status.HTTP_400_BAD_REQUEST
                 )
-            payload['student_id'] = verified_student_id
+            payload['student_id'] = registered_student_id
 
         serializer = StudentProfileSerializer(data=payload)
         if serializer.is_valid():
@@ -76,9 +73,24 @@ class UpdateStudentProfileView(APIView):
     def put(self, request):
         try:
             profile = StudentProfile.objects.get(user=request.user)
+            payload = request.data.copy()
+            registered_student_id = getattr(request.user, 'verified_student_id', None)
+            if registered_student_id:
+                provided_student_id = payload.get('student_id')
+                if provided_student_id and provided_student_id != registered_student_id:
+                    return Response(
+                        {
+                            'student_id': [
+                                'Student ID must match the ID used during attachment registration.'
+                            ]
+                        },
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+                payload['student_id'] = registered_student_id
+
             serializer = StudentProfileSerializer(
                 profile,
-                data=request.data,
+                data=payload,
                 partial=True
             )
             if serializer.is_valid():

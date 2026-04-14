@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
+import NotificationPanel from '../components/NotificationPanel';
 import './Profile.css';
 
 export default function StudentProfile() {
@@ -76,6 +77,11 @@ export default function StudentProfile() {
         </div>
 
         {error && <div className="profile-error">{error}</div>}
+        <NotificationPanel
+          title="Placement Notifications"
+          subtitle="Track whether you have been placed and view the latest placement update."
+          items={profile?.notifications || []}
+        />
 
         {!editing ? (
           <div className="profile-view">

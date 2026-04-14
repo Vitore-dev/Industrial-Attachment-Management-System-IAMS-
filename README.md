@@ -79,7 +79,7 @@ python manage.py migrate
 
 ## 5. Create an Admin User
 
-This lets you log into Django admin and manage registry records, users, and other system data.
+This lets you log into Django admin and manage users and other system data.
 
 ```powershell
 python manage.py createsuperuser
@@ -122,40 +122,17 @@ Frontend URL:
 
 - Web app: [http://localhost:3000/](http://localhost:3000/)
 
-## 8. Important Setup for Student Registration
+## 8. Student Registration Flow
 
-Student registration is verified against the `SchoolStudentRecord` table.
+Students now register for industrial attachment through the simulated ASAS student management portal, then sign in to IAMS and complete their profile inside the system.
 
 That means:
 
-- a student cannot register unless their `student_id` and email already exist in the school registry data
-- the email must match the format stored in the registry
-
-You can add school records in either of these ways:
-
-- through Django admin at `/admin/`
-- through Django shell
-
-Example shell command to create one school record:
-
-```powershell
-python manage.py shell
-```
-
-Then run:
-
-```python
-from accounts.models import SchoolStudentRecord
-
-SchoolStudentRecord.objects.create(
-    student_id="202302165",
-    email="202302165@ub.ac.bw",
-    first_name="Thabang",
-    last_name="Student",
-    department="Computer Science",
-    year_of_study="3",
-)
-```
+- student registration starts on the ASAS portal at `/asas/register`
+- a student account is created with `username`, `email`, `password`, and `student_id`
+- after ASAS registration, the student is redirected to the IAMS sign-in page
+- once signed in, the student completes the rest of the profile in the student setup page
+- the student profile keeps using the same `student_id` that was provided during attachment registration
 
 ## 9. Running Without Activating the Virtual Environment
 
@@ -189,7 +166,7 @@ npm run build
 
 ## 11. Project Structure
 
-- `accounts/` - authentication, roles, school verification
+- `accounts/` - authentication, roles, and account registration
 - `students/` - student profiles and preferences
 - `organizations/` - organization profiles and approval
 - `dashboard/` - coordinator dashboard APIs

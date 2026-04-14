@@ -8,14 +8,18 @@ export default function StudentSetup() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [form, setForm] = useState({
-    student_id: '', first_name: '', last_name: '',
-    year_of_study: '', department: '',
-    preferred_project_type: '', preferred_location: '',
+    student_id: '',
+    first_name: '',
+    last_name: '',
+    year_of_study: '',
+    department: '',
+    preferred_project_type: '',
+    preferred_location: '',
     skills: '',
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const isVerifiedStudent = Boolean(user?.is_school_verified && user?.verified_student_id);
+  const hasRegisteredStudentId = Boolean(user?.verified_student_id);
 
   useEffect(() => {
     if (!user) return;
@@ -32,14 +36,18 @@ export default function StudentSetup() {
     e.preventDefault();
     setLoading(true);
     setError('');
+
     const payload = {
       ...form,
-      skills: form.skills.split(',').map(s => s.trim()).filter(Boolean),
+      skills: form.skills.split(',').map((skill) => skill.trim()).filter(Boolean),
     };
+
     const data = await api.createStudent(payload);
+
     setLoading(false);
-    if (data.id || data.message) navigate('/student/profile');
-    else {
+    if (data.id || data.message) {
+      navigate('/student/profile');
+    } else {
       const errMsg = Object.values(data).flat().join(' ');
       setError(errMsg || 'Failed to create profile');
     }
@@ -49,14 +57,14 @@ export default function StudentSetup() {
     <div className="profile-container">
       <div className="profile-header">
         <div className="profile-brand">
-          <span>⬡</span> IAMS
+          <span>&#9633;</span> IAMS
         </div>
       </div>
       <div className="profile-content">
         <div className="profile-card">
           <div className="profile-card-header">
             <h2>Complete Your Profile</h2>
-            <p>Tell us about yourself so we can find the best placement for you</p>
+            <p>Finish your student profile so we can match you to the best placement.</p>
           </div>
           {error && <div className="profile-error">{error}</div>}
           <form onSubmit={handleSubmit}>
@@ -64,13 +72,23 @@ export default function StudentSetup() {
             <div className="form-row">
               <div className="form-group">
                 <label>First Name</label>
-                <input type="text" placeholder="Your first name" value={form.first_name}
-                  onChange={(e) => setForm({ ...form, first_name: e.target.value })} required />
+                <input
+                  type="text"
+                  placeholder="Your first name"
+                  value={form.first_name}
+                  onChange={(e) => setForm({ ...form, first_name: e.target.value })}
+                  required
+                />
               </div>
               <div className="form-group">
                 <label>Last Name</label>
-                <input type="text" placeholder="Your last name" value={form.last_name}
-                  onChange={(e) => setForm({ ...form, last_name: e.target.value })} required />
+                <input
+                  type="text"
+                  placeholder="Your last name"
+                  value={form.last_name}
+                  onChange={(e) => setForm({ ...form, last_name: e.target.value })}
+                  required
+                />
               </div>
             </div>
             <div className="form-row">
@@ -81,19 +99,22 @@ export default function StudentSetup() {
                   placeholder="e.g. 202201524"
                   value={form.student_id}
                   onChange={(e) => setForm({ ...form, student_id: e.target.value })}
-                  readOnly={isVerifiedStudent}
+                  readOnly={hasRegisteredStudentId}
                   required
                 />
-                {isVerifiedStudent && (
+                {hasRegisteredStudentId && (
                   <small className="label-hint">
-                    Verified from the school registration system.
+                    Locked to the student ID used during attachment registration.
                   </small>
                 )}
               </div>
               <div className="form-group">
                 <label>Year of Study</label>
-                <select value={form.year_of_study}
-                  onChange={(e) => setForm({ ...form, year_of_study: e.target.value })} required>
+                <select
+                  value={form.year_of_study}
+                  onChange={(e) => setForm({ ...form, year_of_study: e.target.value })}
+                  required
+                >
                   <option value="">-- Select year --</option>
                   <option value="1">Year 1</option>
                   <option value="2">Year 2</option>
@@ -104,16 +125,24 @@ export default function StudentSetup() {
             </div>
             <div className="form-group">
               <label>Department</label>
-              <input type="text" placeholder="e.g. Computer Science" value={form.department}
-                onChange={(e) => setForm({ ...form, department: e.target.value })} required />
+              <input
+                type="text"
+                placeholder="e.g. Computer Science"
+                value={form.department}
+                onChange={(e) => setForm({ ...form, department: e.target.value })}
+                required
+              />
             </div>
 
             <div className="section-title">Attachment Preferences</div>
             <div className="form-row">
               <div className="form-group">
                 <label>Preferred Project Type</label>
-                <select value={form.preferred_project_type}
-                  onChange={(e) => setForm({ ...form, preferred_project_type: e.target.value })} required>
+                <select
+                  value={form.preferred_project_type}
+                  onChange={(e) => setForm({ ...form, preferred_project_type: e.target.value })}
+                  required
+                >
                   <option value="">-- Select type --</option>
                   <option value="web_development">Web Development</option>
                   <option value="mobile_development">Mobile Development</option>
@@ -126,8 +155,11 @@ export default function StudentSetup() {
               </div>
               <div className="form-group">
                 <label>Preferred Location</label>
-                <select value={form.preferred_location}
-                  onChange={(e) => setForm({ ...form, preferred_location: e.target.value })} required>
+                <select
+                  value={form.preferred_location}
+                  onChange={(e) => setForm({ ...form, preferred_location: e.target.value })}
+                  required
+                >
                   <option value="">-- Select location --</option>
                   <option value="gaborone">Gaborone</option>
                   <option value="francistown">Francistown</option>
@@ -140,9 +172,15 @@ export default function StudentSetup() {
               </div>
             </div>
             <div className="form-group">
-              <label>Skills <span className="label-hint">(comma separated e.g. Python, Django, React)</span></label>
-              <input type="text" placeholder="Python, Django, React, SQL..." value={form.skills}
-                onChange={(e) => setForm({ ...form, skills: e.target.value })} />
+              <label>
+                Skills <span className="label-hint">(comma separated e.g. Python, Django, React)</span>
+              </label>
+              <input
+                type="text"
+                placeholder="Python, Django, React, SQL..."
+                value={form.skills}
+                onChange={(e) => setForm({ ...form, skills: e.target.value })}
+              />
             </div>
             <button type="submit" className="profile-btn" disabled={loading}>
               {loading ? 'Saving...' : 'Save Profile'}
