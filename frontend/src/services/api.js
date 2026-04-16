@@ -1,4 +1,6 @@
-const BASE_URL = 'http://127.0.0.1:8000/api';
+const BASE_URL = (
+  process.env.REACT_APP_API_BASE_URL || 'http://127.0.0.1:8000/api'
+).replace(/\/$/, '');
 
 const getToken = () => localStorage.getItem('access_token');
 

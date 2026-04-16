@@ -1,4 +1,4 @@
-# Industrial Attachment Management System (IAMS)
+﻿# Industrial Attachment Management System (IAMS)
 
 IAMS is a web-based system for managing the industrial attachment process. It supports:
 
@@ -14,7 +14,7 @@ IAMS is a web-based system for managing the industrial attachment process. It su
 
 - Backend: Django + Django REST Framework
 - Frontend: React
-- Database: SQLite by default, PostgreSQL when `DB_*` environment variables are provided
+- Database: SQLite by default, PostgreSQL when `DATABASE_URL` or `DB_*` environment variables are provided
 
 ## Prerequisites
 
@@ -56,6 +56,7 @@ Create a `.env` file in the project root if it does not already exist:
 ```env
 SECRET_KEY=local-dev-secret-key-change-me
 DEBUG=True
+DATABASE_URL=
 DB_NAME=
 DB_USER=
 DB_PASSWORD=
@@ -65,8 +66,9 @@ DB_PORT=5432
 
 Notes:
 
-- If `DB_NAME`, `DB_USER`, `DB_PASSWORD`, and `DB_HOST` are left empty, the system uses the local SQLite database automatically.
-- If you want PostgreSQL, fill in those values and Django will use PostgreSQL instead.
+- If `DATABASE_URL` is set, Django will use it first.
+- If `DB_NAME`, `DB_USER`, `DB_PASSWORD`, and `DB_HOST` are filled, Django will use that PostgreSQL connection.
+- If neither PostgreSQL option is configured, the system falls back to the local SQLite database automatically.
 - Email notifications use Django's local email backend unless you configure SMTP separately.
 
 ## 4. Apply Migrations
@@ -164,7 +166,50 @@ cd frontend
 npm run build
 ```
 
-## 11. Project Structure
+## 11. Deploying to Render
+
+This repository is now prepared for a Render Blueprint deployment with:
+
+- a Django web service for the API
+- a React static site for the frontend
+- a Render Postgres database for persistent relational data
+
+### Recommended path
+
+1. Push this repository to GitHub.
+2. In Render, open Blueprints and create a new Blueprint instance from the repository.
+3. Render will read `render.yaml` and prepare these resources:
+   - `industrial-attachment-ams-api`
+   - `industrial-attachment-ams-web`
+   - `industrial-attachment-ams-db`
+4. When prompted, provide:
+   - `DJANGO_SUPERUSER_USERNAME`
+   - `DJANGO_SUPERUSER_EMAIL`
+   - `DJANGO_SUPERUSER_PASSWORD`
+5. Apply the blueprint and wait for the initial deploy to finish.
+
+### What happens automatically
+
+- the backend runs migrations during deploy
+- the backend creates or updates a coordinator/superuser account from the `DJANGO_SUPERUSER_*` variables
+- the frontend build receives the backend Render URL automatically
+- the backend CORS list receives the deployed frontend URL automatically
+
+### Lecturer review URLs
+
+After deployment:
+
+- frontend app: the `industrial-attachment-ams-web` Render URL
+- backend admin: the `industrial-attachment-ams-api` Render URL with `/admin/`
+- API base: the `industrial-attachment-ams-api` Render URL with `/api/`
+
+### Important Render notes
+
+- The production deployment uses Render Postgres because Render web services have an ephemeral filesystem and local SQLite is not persistent there.
+- Student CV uploads are still stored on the web service filesystem. Those uploaded files can be lost when the service restarts, redeploys, or spins down.
+- According to Render's current free-tier docs, free web services spin down after 15 minutes of inactivity, and free Postgres databases expire 30 days after creation. If you create the database on April 16, 2026, it would expire around May 16, 2026 unless you upgrade it.
+
+## 12. Project Structure
 
 - `accounts/` - authentication, roles, and account registration
 - `students/` - student profiles and preferences
