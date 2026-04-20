@@ -1,5 +1,12 @@
 # Industrial Attachment Management System (IAMS)
 
+Groupmembers
+1.Uakambura Vitore – 202206392
+2.Thando Fino – 202201524
+3.Thabang Tsimakwane – 202302165
+4.Phenyo Morapedi – 202105212
+5.Angel Tshukudu – 202301115
+
 IAMS is a web-based system for managing the industrial attachment process. It supports:
 
 - user registration and login with roles
