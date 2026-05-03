@@ -59,8 +59,8 @@ export default function Register() {
           <p className="auth-subtitle">Register your role-specific account to access the platform.</p>
           {error && <div className="auth-error">{error}</div>}
           <div className="auth-notice">
-            <strong>Students use ASAS.</strong> Student attachment registration happens in the ASAS portal first.
-            <Link to="/asas/register"> Open ASAS student registration</Link>
+            <strong>Students use the student registration portal.</strong> Student attachment registration happens there first.
+            <Link to="/asas/register"> Open student registration</Link>
           </div>
           <form onSubmit={handleSubmit}>
             <div className="form-row">

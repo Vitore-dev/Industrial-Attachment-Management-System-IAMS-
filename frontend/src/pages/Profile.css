@@ -157,6 +157,26 @@ body { font-family: 'DM Sans', sans-serif; }
   margin-bottom: 20px;
 }
 
+.profile-banner {
+  border-radius: 12px;
+  padding: 14px 18px;
+  margin-bottom: 24px;
+  border: 1px solid var(--border);
+  font-size: 14px;
+}
+
+.profile-banner.success {
+  background: #ecfdf5;
+  border-color: #a7f3d0;
+  color: #166534;
+}
+
+.profile-banner.error {
+  background: #fef2f2;
+  border-color: #fecaca;
+  color: #991b1b;
+}
+
 /* Profile View Pages */
 .profile-page {
   display: flex;
@@ -293,6 +313,13 @@ body { font-family: 'DM Sans', sans-serif; }
   color: var(--text);
 }
 
+.section-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+}
+
 .edit-btn {
   background: var(--white);
   border: 1.5px solid var(--border);
@@ -312,6 +339,7 @@ body { font-family: 'DM Sans', sans-serif; }
 }
 
 .profile-view { display: flex; flex-direction: column; gap: 24px; }
+.workflow-stack { margin-top: 24px; }
 
 .view-section {
   background: var(--white);
@@ -500,6 +528,182 @@ body { font-family: 'DM Sans', sans-serif; }
 }
 
 .profile-edit-form { display: flex; flex-direction: column; gap: 24px; }
+.compact-form { gap: 16px; }
+
+.section-switcher {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 24px;
+}
+
+.section-switcher button {
+  border: 1px solid var(--border);
+  background: var(--white);
+  color: var(--text-muted);
+  border-radius: 999px;
+  padding: 10px 16px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.section-switcher button:hover,
+.section-switcher button.active {
+  background: var(--accent-light);
+  border-color: rgba(0, 200, 150, 0.25);
+  color: var(--primary);
+}
+
+.workflow-note {
+  color: var(--text-muted);
+  font-size: 14px;
+  line-height: 1.6;
+  margin-top: 12px;
+}
+
+.progress-meter {
+  margin-bottom: 22px;
+  padding: 16px 18px;
+  background: linear-gradient(135deg, rgba(0, 200, 150, 0.08), rgba(10, 61, 46, 0.04));
+  border: 1px solid rgba(0, 200, 150, 0.14);
+  border-radius: 14px;
+}
+
+.progress-meter-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.progress-meter-top strong {
+  color: var(--primary);
+  font-family: 'Syne', sans-serif;
+  font-size: 16px;
+}
+
+.progress-meter-top span {
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.progress-track {
+  width: 100%;
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(10, 61, 46, 0.08);
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--primary), var(--accent));
+}
+
+.workflow-entry-list {
+  display: grid;
+  gap: 16px;
+  margin-top: 20px;
+}
+
+.workflow-entry {
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 18px 20px;
+  background: #fcfdfd;
+}
+
+.workflow-entry-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.workflow-entry-header h4 {
+  font-family: 'Syne', sans-serif;
+  font-size: 18px;
+  color: var(--text);
+  margin-bottom: 6px;
+}
+
+.workflow-entry-header p {
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.workflow-entry-body {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.workflow-entry-body p {
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.workflow-metrics {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.workflow-link {
+  color: var(--primary);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.workflow-link:hover {
+  color: var(--accent);
+}
+
+.checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.checkbox-row input {
+  width: auto;
+}
+
+.filter-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.filter-input,
+.filter-select {
+  min-height: 42px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--white);
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  padding: 10px 14px;
+}
+
+.filter-input {
+  min-width: 260px;
+}
+
+.filter-input:focus,
+.filter-select:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(0, 200, 150, 0.08);
+}
 
 .dash-loading {
   display: flex;
@@ -524,15 +728,41 @@ body { font-family: 'DM Sans', sans-serif; }
 
 @media (max-width: 768px) {
   .form-row { grid-template-columns: 1fr; }
-  .view-grid { grid-template-columns: 1fr 1fr; }
+  .view-grid,
+  .workflow-metrics { grid-template-columns: 1fr; }
   .profile-card { padding: 28px; }
   .notification-meta,
-  .notification-panel-header {
+  .notification-panel-header,
+  .workflow-entry-header,
+  .profile-main-header,
+  .progress-meter-top,
+  .section-heading {
     flex-direction: column;
     align-items: flex-start;
   }
 
   .notification-time {
     white-space: normal;
+  }
+
+  .filter-input {
+    min-width: 100%;
+  }
+}
+
+@media (max-width: 980px) {
+  .profile-page {
+    flex-direction: column;
+  }
+
+  .profile-sidebar {
+    position: static;
+    width: 100%;
+    height: auto;
+  }
+
+  .profile-main {
+    margin-left: 0;
+    padding: 24px;
   }
 }

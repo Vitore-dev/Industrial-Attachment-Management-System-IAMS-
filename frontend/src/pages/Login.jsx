@@ -16,7 +16,7 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const successMessage = location.state?.successMessage || '';
   const portalName = location.state?.portalName || '';
-  const cameFromAsas = portalName === 'ASAS';
+  const cameFromStudentPortal = portalName === 'student_portal';
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -42,9 +42,9 @@ export default function Login() {
           <p>Industrial Attachment<br />Management System</p>
         </div>
         <div className="auth-tagline">
-          <h2>{cameFromAsas ? 'ASAS registration complete' : 'Connecting students with opportunities'}</h2>
+          <h2>{cameFromStudentPortal ? 'Student registration complete' : 'Connecting students with opportunities'}</h2>
           <p>
-            {cameFromAsas
+            {cameFromStudentPortal
               ? 'Continue into IAMS to complete your profile and attachment preferences.'
               : 'University of Botswana - Department of Computer Science'}
           </p>
@@ -55,12 +55,12 @@ export default function Login() {
           <div className="auth-pill">IAMS Portal</div>
           <h2>Welcome back</h2>
           <p className="auth-subtitle">
-            {cameFromAsas
-              ? 'Sign in with the account you just created in ASAS.'
+            {cameFromStudentPortal
+              ? 'Sign in with the account you just created in the student registration portal.'
               : 'Sign in to your account'}
           </p>
           {successMessage && <div className="auth-success">{successMessage}</div>}
-          {cameFromAsas && (
+          {cameFromStudentPortal && (
             <div className="auth-notice">
               <strong>Next step:</strong> sign in to IAMS, then complete your student profile to continue.
             </div>
@@ -93,7 +93,7 @@ export default function Login() {
           </form>
           <div className="auth-links-row">
             <p className="auth-link">
-              Student without an account? <Link to="/asas/register">Register in ASAS</Link>
+              Student without an account? <Link to="/asas/register">Open student registration</Link>
             </p>
             <p className="auth-link">
               Need a staff or organization account? <Link to="/register">Register in IAMS</Link>

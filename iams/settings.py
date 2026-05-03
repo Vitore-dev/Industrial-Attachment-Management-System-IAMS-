@@ -1,4 +1,5 @@
 from datetime import timedelta
+import importlib.util
 import os
 from pathlib import Path
 from urllib.parse import parse_qs, unquote, urlparse
@@ -8,6 +9,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+WHITENOISE_INSTALLED = importlib.util.find_spec('whitenoise') is not None
 
 
 def env_bool(name, default=False):
@@ -91,12 +93,12 @@ INSTALLED_APPS = [
     'students',
     'dashboard',
     'matching',
+    'workflow',
 ]
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -104,6 +106,9 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
+if WHITENOISE_INSTALLED:
+    MIDDLEWARE.insert(2, 'whitenoise.middleware.WhiteNoiseMiddleware')
 
 ROOT_URLCONF = 'iams.urls'
 
@@ -164,7 +169,8 @@ USE_TZ = True
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+if WHITENOISE_INSTALLED:
+    STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 if frontend_static_dir.exists():
     STATICFILES_DIRS = [frontend_static_dir]
 

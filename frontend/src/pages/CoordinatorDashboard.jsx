@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import CoordinatorWorkflowTab from '../components/CoordinatorWorkflowTab';
 import api from '../services/api';
 import './Dashboard.css';
 
@@ -30,13 +31,22 @@ export default function CoordinatorDashboard() {
   const [organizations, setOrganizations] = useState([]);
   const [assignments, setAssignments] = useState([]);
   const [matchingData, setMatchingData] = useState(EMPTY_MATCHING_DATA);
+  const [workflowOverview, setWorkflowOverview] = useState(null);
+  const [workflowStudents, setWorkflowStudents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
   const [busyKey, setBusyKey] = useState('');
   const [runningMatch, setRunningMatch] = useState(false);
+  const [remindersBusy, setRemindersBusy] = useState(false);
+  const [exportBusy, setExportBusy] = useState(false);
   const [notice, setNotice] = useState(null);
   const [pageError, setPageError] = useState('');
   const [overrideForm, setOverrideForm] = useState({});
+  const [studentSearch, setStudentSearch] = useState('');
+  const [studentStatusFilter, setStudentStatusFilter] = useState('all');
+  const [organizationSearch, setOrganizationSearch] = useState('');
+  const [organizationStatusFilter, setOrganizationStatusFilter] = useState('all');
+  const [matchingSearch, setMatchingSearch] = useState('');
 
   const approvedOrganizations = organizations.filter((org) => org.is_approved);
   const openOrganizations = approvedOrganizations.filter(
@@ -69,8 +79,18 @@ export default function CoordinatorDashboard() {
     );
   };
 
+  const loadWorkflowData = async () => {
+    const [overviewPayload, studentsPayload] = await Promise.all([
+      api.getCoordinatorWorkflowOverview(),
+      api.getCoordinatorWorkflowStudents(),
+    ]);
+
+    setWorkflowOverview(overviewPayload);
+    setWorkflowStudents(extractList(studentsPayload));
+  };
+
   const refreshAllData = async () => {
-    await Promise.all([loadCoreData(), loadMatchingData()]);
+    await Promise.all([loadCoreData(), loadMatchingData(), loadWorkflowData()]);
   };
 
   useEffect(() => {
@@ -201,6 +221,52 @@ export default function CoordinatorDashboard() {
     navigate('/login');
   };
 
+  const handleSendReminders = async () => {
+    setRemindersBusy(true);
+    const response = await api.sendWorkflowReminders();
+    if (response.summary) {
+      const summary = response.summary;
+      setNotice({
+        type: 'success',
+        text:
+          `Workflow reminders processed. Students pending submissions: ${summary.student_submission_pending}. ` +
+          `Industrial reports pending: ${summary.industrial_reports_pending}. ` +
+          `University assessments pending: ${summary.university_assessments_pending}.`,
+      });
+      await loadWorkflowData();
+    } else {
+      setNotice({
+        type: 'error',
+        text: buildMessage(response, 'Unable to send workflow reminders.'),
+      });
+    }
+    setRemindersBusy(false);
+  };
+
+  const handleDownloadCsv = async () => {
+    setExportBusy(true);
+    const response = await api.downloadGradesCsv();
+    if (!response?.success) {
+      setNotice({
+        type: 'error',
+        text: buildMessage(response, 'Unable to export grades as CSV.'),
+      });
+    }
+    setExportBusy(false);
+  };
+
+  const handleDownloadPdf = async () => {
+    setExportBusy(true);
+    const response = await api.downloadGradesPdf();
+    if (!response?.success) {
+      setNotice({
+        type: 'error',
+        text: buildMessage(response, 'Unable to export grades as PDF.'),
+      });
+    }
+    setExportBusy(false);
+  };
+
   if (loading) {
     return (
       <div className="dash-loading">
@@ -211,6 +277,54 @@ export default function CoordinatorDashboard() {
   }
 
   const matchingStats = data?.matching_statistics || {};
+  const normalizedStudentSearch = studentSearch.trim().toLowerCase();
+  const normalizedOrganizationSearch = organizationSearch.trim().toLowerCase();
+  const normalizedMatchingSearch = matchingSearch.trim().toLowerCase();
+
+  const filteredStudents = students.filter((student) => {
+    const matchesSearch = !normalizedStudentSearch || [
+      `${student.first_name} ${student.last_name}`,
+      student.student_id,
+      student.department,
+      student.assigned_organization_name,
+    ].some((value) => (value || '').toLowerCase().includes(normalizedStudentSearch));
+    const matchesStatus = studentStatusFilter === 'all'
+      || (studentStatusFilter === 'placed' && student.is_placed)
+      || (studentStatusFilter === 'unplaced' && !student.is_placed);
+    return matchesSearch && matchesStatus;
+  });
+
+  const filteredOrganizations = organizations.filter((organization) => {
+    const matchesSearch = !normalizedOrganizationSearch || [
+      organization.company_name,
+      organization.industry,
+      organization.location,
+      organization.preferred_project_type,
+    ].some((value) => (value || '').toLowerCase().includes(normalizedOrganizationSearch));
+    const matchesStatus = organizationStatusFilter === 'all'
+      || (organizationStatusFilter === 'approved' && organization.is_approved)
+      || (organizationStatusFilter === 'pending' && !organization.is_approved);
+    return matchesSearch && matchesStatus;
+  });
+
+  const filteredAssignments = assignments.filter((assignment) => {
+    if (!normalizedMatchingSearch) return true;
+    return [
+      assignment.student_name,
+      assignment.organization_name,
+      assignment.source,
+    ].some((value) => (value || '').toLowerCase().includes(normalizedMatchingSearch));
+  });
+
+  const filteredMatchingStudents = matchingData.students?.filter((entry) => {
+    if (!normalizedMatchingSearch) return true;
+    return [
+      entry.student.name,
+      entry.student.student_id,
+      entry.student.department,
+      ...(entry.suggestions || []).map((suggestion) => suggestion.organization_name),
+    ].some((value) => (value || '').toLowerCase().includes(normalizedMatchingSearch));
+  }) || [];
 
   return (
     <div className="dash-container">
@@ -244,6 +358,12 @@ export default function CoordinatorDashboard() {
           >
             <span>M</span> Matching
           </button>
+          <button
+            className={activeTab === 'release2' ? 'active' : ''}
+            onClick={() => setActiveTab('release2')}
+          >
+            <span>R</span> Release 2
+          </button>
         </nav>
         <div className="sidebar-user">
           <div className="user-avatar">{user?.username?.[0]?.toUpperCase()}</div>
@@ -265,7 +385,9 @@ export default function CoordinatorDashboard() {
                   ? 'Students'
                   : activeTab === 'organizations'
                     ? 'Organizations'
-                    : 'Matching Engine'}
+                    : activeTab === 'matching'
+                      ? 'Matching Engine'
+                      : 'Release 2 Workflow'}
             </h1>
             <p>Industrial Attachment Management System</p>
           </div>
@@ -285,26 +407,26 @@ export default function CoordinatorDashboard() {
         {activeTab === 'overview' && data && (
           <div className="dash-content">
             <div className="stats-grid">
-              <div className="stat-card accent">
+              <button className="stat-card accent stat-card-button" onClick={() => setActiveTab('students')}>
                 <div className="stat-icon">S</div>
                 <div className="stat-value">{data.student_statistics?.total_student_profiles}</div>
                 <div className="stat-label">Total Students</div>
-              </div>
-              <div className="stat-card">
+              </button>
+              <button className="stat-card stat-card-button" onClick={() => setActiveTab('organizations')}>
                 <div className="stat-icon">O</div>
                 <div className="stat-value">{data.organization_statistics?.total_organization_profiles}</div>
                 <div className="stat-label">Total Organizations</div>
-              </div>
-              <div className="stat-card">
+              </button>
+              <button className="stat-card stat-card-button" onClick={() => setActiveTab('matching')}>
                 <div className="stat-icon">M</div>
                 <div className="stat-value">{matchingStats.confirmed_matches || 0}</div>
                 <div className="stat-label">Confirmed Matches</div>
-              </div>
-              <div className="stat-card">
+              </button>
+              <button className="stat-card stat-card-button" onClick={() => setActiveTab('release2')}>
                 <div className="stat-icon">P</div>
-                <div className="stat-value">{matchingStats.students_pending_match || 0}</div>
-                <div className="stat-label">Pending Matching</div>
-              </div>
+                <div className="stat-value">{workflowOverview?.workflow_statistics?.students_ready_for_grading || 0}</div>
+                <div className="stat-label">Grades Ready</div>
+              </button>
             </div>
 
             <div className="dash-tables">
@@ -373,7 +495,25 @@ export default function CoordinatorDashboard() {
           <div className="dash-content">
             <div className="table-section full">
               <div className="table-header">
-                <h3>All Students ({students.length})</h3>
+                <h3>All Students ({filteredStudents.length})</h3>
+                <div className="filter-toolbar">
+                  <input
+                    type="search"
+                    className="filter-input"
+                    placeholder="Search students, IDs, departments, or placements"
+                    value={studentSearch}
+                    onChange={(event) => setStudentSearch(event.target.value)}
+                  />
+                  <select
+                    className="filter-select"
+                    value={studentStatusFilter}
+                    onChange={(event) => setStudentStatusFilter(event.target.value)}
+                  >
+                    <option value="all">All statuses</option>
+                    <option value="placed">Placed</option>
+                    <option value="unplaced">Unplaced</option>
+                  </select>
+                </div>
               </div>
               <table className="dash-table">
                 <thead>
@@ -389,7 +529,7 @@ export default function CoordinatorDashboard() {
                   </tr>
                 </thead>
                 <tbody>
-                  {students.map((student) => (
+                  {filteredStudents.map((student) => (
                     <tr key={student.id}>
                       <td>{student.first_name} {student.last_name}</td>
                       <td><span className="badge">{student.student_id}</span></td>
@@ -405,8 +545,8 @@ export default function CoordinatorDashboard() {
                       </td>
                     </tr>
                   ))}
-                  {students.length === 0 && (
-                    <tr><td colSpan="8" className="empty">No students registered yet</td></tr>
+                  {filteredStudents.length === 0 && (
+                    <tr><td colSpan="8" className="empty">No students match the current filter.</td></tr>
                   )}
                 </tbody>
               </table>
@@ -418,7 +558,25 @@ export default function CoordinatorDashboard() {
           <div className="dash-content">
             <div className="table-section full">
               <div className="table-header">
-                <h3>All Organizations ({organizations.length})</h3>
+                <h3>All Organizations ({filteredOrganizations.length})</h3>
+                <div className="filter-toolbar">
+                  <input
+                    type="search"
+                    className="filter-input"
+                    placeholder="Search organizations, sectors, or locations"
+                    value={organizationSearch}
+                    onChange={(event) => setOrganizationSearch(event.target.value)}
+                  />
+                  <select
+                    className="filter-select"
+                    value={organizationStatusFilter}
+                    onChange={(event) => setOrganizationStatusFilter(event.target.value)}
+                  >
+                    <option value="all">All statuses</option>
+                    <option value="approved">Approved</option>
+                    <option value="pending">Pending</option>
+                  </select>
+                </div>
               </div>
               <table className="dash-table">
                 <thead>
@@ -434,7 +592,7 @@ export default function CoordinatorDashboard() {
                   </tr>
                 </thead>
                 <tbody>
-                  {organizations.map((organization) => (
+                  {filteredOrganizations.map((organization) => (
                     <tr key={organization.id}>
                       <td>{organization.company_name}</td>
                       <td>{formatLabel(organization.industry)}</td>
@@ -460,8 +618,8 @@ export default function CoordinatorDashboard() {
                       </td>
                     </tr>
                   ))}
-                  {organizations.length === 0 && (
-                    <tr><td colSpan="8" className="empty">No organizations registered yet</td></tr>
+                  {filteredOrganizations.length === 0 && (
+                    <tr><td colSpan="8" className="empty">No organizations match the current filter.</td></tr>
                   )}
                 </tbody>
               </table>
@@ -487,6 +645,15 @@ export default function CoordinatorDashboard() {
                 >
                   {runningMatch ? 'Running Engine...' : 'Run Matching Engine'}
                 </button>
+              </div>
+              <div className="filter-toolbar top-gap">
+                <input
+                  type="search"
+                  className="filter-input"
+                  placeholder="Search students, suggestions, or confirmed matches"
+                  value={matchingSearch}
+                  onChange={(event) => setMatchingSearch(event.target.value)}
+                />
               </div>
             </div>
 
@@ -515,7 +682,7 @@ export default function CoordinatorDashboard() {
 
             <div className="table-section full">
               <div className="table-header">
-                <h3>Confirmed Matches ({assignments.length})</h3>
+                <h3>Confirmed Matches ({filteredAssignments.length})</h3>
               </div>
               <table className="dash-table">
                 <thead>
@@ -529,7 +696,7 @@ export default function CoordinatorDashboard() {
                   </tr>
                 </thead>
                 <tbody>
-                  {assignments.map((assignment) => (
+                  {filteredAssignments.map((assignment) => (
                     <tr key={assignment.id}>
                       <td>{assignment.student_name}</td>
                       <td>{assignment.organization_name}</td>
@@ -539,22 +706,22 @@ export default function CoordinatorDashboard() {
                       <td>{assignment.notification_status}</td>
                     </tr>
                   ))}
-                  {assignments.length === 0 && (
-                    <tr><td colSpan="6" className="empty">No confirmed matches yet. Run the matching engine to generate suggestions.</td></tr>
+                  {filteredAssignments.length === 0 && (
+                    <tr><td colSpan="6" className="empty">No confirmed matches match the current search.</td></tr>
                   )}
                 </tbody>
               </table>
             </div>
 
             <div className="matching-grid">
-              {matchingData.students?.map((entry) => (
+              {filteredMatchingStudents.map((entry) => (
                 <div className="matching-card" key={entry.student.id}>
                   <div className="matching-card-header">
                     <div>
                       <h3>{entry.student.name}</h3>
                       <p>
-                        {entry.student.student_id} · {entry.student.department} ·{' '}
-                        {formatLabel(entry.student.preferred_project_type)} ·{' '}
+                        {entry.student.student_id} - {entry.student.department} -{' '}
+                        {formatLabel(entry.student.preferred_project_type)} -{' '}
                         {formatLabel(entry.student.preferred_location)}
                       </p>
                     </div>
@@ -577,8 +744,8 @@ export default function CoordinatorDashboard() {
                             <div>
                               <strong>{suggestion.organization_name}</strong>
                               <p>
-                                {formatLabel(suggestion.organization_project_type)} ·{' '}
-                                {formatLabel(suggestion.organization_location)} ·{' '}
+                                {formatLabel(suggestion.organization_project_type)} -{' '}
+                                {formatLabel(suggestion.organization_location)} -{' '}
                                 {suggestion.organization_remaining_slots} slot(s) left
                               </p>
                             </div>
@@ -663,14 +830,26 @@ export default function CoordinatorDashboard() {
               ))}
             </div>
 
-            {matchingData.students?.length === 0 && (
+            {filteredMatchingStudents.length === 0 && (
               <div className="table-section full">
                 <p className="empty">
-                  No students are currently waiting for matching suggestions.
+                  No matching cards match the current search.
                 </p>
               </div>
             )}
           </div>
+        )}
+
+        {activeTab === 'release2' && (
+          <CoordinatorWorkflowTab
+            workflowOverview={workflowOverview}
+            workflowStudents={workflowStudents}
+            remindersBusy={remindersBusy}
+            exportBusy={exportBusy}
+            onSendReminders={handleSendReminders}
+            onDownloadCsv={handleDownloadCsv}
+            onDownloadPdf={handleDownloadPdf}
+          />
         )}
       </main>
     </div>

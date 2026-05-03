@@ -37,6 +37,7 @@ urlpatterns = [
     path('api/students/', include('students.urls')),
     path('api/dashboard/', include('dashboard.urls')),
     path('api/matching/', include('matching.urls')),
+    path('api/workflow/', include('workflow.urls')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 if frontend_index.exists():

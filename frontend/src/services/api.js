@@ -3,6 +3,47 @@ const BASE_URL = (
 ).replace(/\/$/, '');
 
 const getToken = () => localStorage.getItem('access_token');
+const getAuthHeaders = (headers = {}) => ({
+  ...headers,
+  Authorization: `Bearer ${getToken()}`,
+});
+
+const parseJsonResponse = async (res) => {
+  const contentType = res.headers.get('content-type') || '';
+  if (contentType.includes('application/json')) {
+    return res.json();
+  }
+  return {};
+};
+
+const downloadFile = async (path, fallbackName) => {
+  const res = await fetch(`${BASE_URL}${path}`, {
+    headers: getAuthHeaders(),
+  });
+
+  if (!res.ok) {
+    return parseJsonResponse(res);
+  }
+
+  const blob = await res.blob();
+  const disposition = res.headers.get('content-disposition') || '';
+  const match = disposition.match(/filename=\"?([^"]+)\"?/i);
+  const filename = match?.[1] || fallbackName;
+  const objectUrl = window.URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = objectUrl;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.URL.revokeObjectURL(objectUrl);
+  return { success: true };
+};
+
+const resolveMediaUrl = (path) => {
+  if (!path) return '';
+  return new URL(path, `${BASE_URL}/`).toString();
+};
 
 const api = {
   // Auth
@@ -27,10 +68,7 @@ const api = {
   logout: async (refresh) => {
     const res = await fetch(`${BASE_URL}/accounts/logout/`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${getToken()}`,
-      },
+      headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify({ refresh }),
     });
     return res.json();
@@ -38,7 +76,7 @@ const api = {
 
   getCurrentUser: async () => {
     const res = await fetch(`${BASE_URL}/accounts/me/`, {
-      headers: { Authorization: `Bearer ${getToken()}` },
+      headers: getAuthHeaders(),
     });
     return res.json();
   },
@@ -47,10 +85,7 @@ const api = {
   createOrganization: async (data) => {
     const res = await fetch(`${BASE_URL}/organizations/create/`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${getToken()}`,
-      },
+      headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify(data),
     });
     return res.json();
@@ -58,7 +93,7 @@ const api = {
 
   getOrganization: async () => {
     const res = await fetch(`${BASE_URL}/organizations/profile/`, {
-      headers: { Authorization: `Bearer ${getToken()}` },
+      headers: getAuthHeaders(),
     });
     return res.json();
   },
@@ -66,10 +101,7 @@ const api = {
   updateOrganization: async (data) => {
     const res = await fetch(`${BASE_URL}/organizations/update/`, {
       method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${getToken()}`,
-      },
+      headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify(data),
     });
     return res.json();
@@ -77,7 +109,7 @@ const api = {
 
   listOrganizations: async () => {
     const res = await fetch(`${BASE_URL}/organizations/list/`, {
-      headers: { Authorization: `Bearer ${getToken()}` },
+      headers: getAuthHeaders(),
     });
     return res.json();
   },
@@ -85,7 +117,7 @@ const api = {
   approveOrganization: async (id) => {
     const res = await fetch(`${BASE_URL}/organizations/approve/${id}/`, {
       method: 'PATCH',
-      headers: { Authorization: `Bearer ${getToken()}` },
+      headers: getAuthHeaders(),
     });
     return res.json();
   },
@@ -94,10 +126,7 @@ const api = {
   createStudent: async (data) => {
     const res = await fetch(`${BASE_URL}/students/create/`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${getToken()}`,
-      },
+      headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify(data),
     });
     return res.json();
@@ -105,7 +134,7 @@ const api = {
 
   getStudent: async () => {
     const res = await fetch(`${BASE_URL}/students/profile/`, {
-      headers: { Authorization: `Bearer ${getToken()}` },
+      headers: getAuthHeaders(),
     });
     return res.json();
   },
@@ -113,10 +142,7 @@ const api = {
   updateStudent: async (data) => {
     const res = await fetch(`${BASE_URL}/students/update/`, {
       method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${getToken()}`,
-      },
+      headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify(data),
     });
     return res.json();
@@ -124,7 +150,7 @@ const api = {
 
   listStudents: async () => {
     const res = await fetch(`${BASE_URL}/students/list/`, {
-      headers: { Authorization: `Bearer ${getToken()}` },
+      headers: getAuthHeaders(),
     });
     return res.json();
   },
@@ -133,23 +159,21 @@ const api = {
   runMatching: async () => {
     const res = await fetch(`${BASE_URL}/matching/run/`, {
       method: 'POST',
-      headers: {
-        Authorization: `Bearer ${getToken()}`,
-      },
+      headers: getAuthHeaders(),
     });
     return res.json();
   },
 
   getMatchSuggestions: async () => {
     const res = await fetch(`${BASE_URL}/matching/suggestions/`, {
-      headers: { Authorization: `Bearer ${getToken()}` },
+      headers: getAuthHeaders(),
     });
     return res.json();
   },
 
   getMatchAssignments: async () => {
     const res = await fetch(`${BASE_URL}/matching/assignments/`, {
-      headers: { Authorization: `Bearer ${getToken()}` },
+      headers: getAuthHeaders(),
     });
     return res.json();
   },
@@ -157,10 +181,7 @@ const api = {
   confirmMatch: async (suggestionId) => {
     const res = await fetch(`${BASE_URL}/matching/confirm/`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${getToken()}`,
-      },
+      headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify({ suggestion_id: suggestionId }),
     });
     return res.json();
@@ -169,10 +190,7 @@ const api = {
   overrideMatch: async (data) => {
     const res = await fetch(`${BASE_URL}/matching/override/`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${getToken()}`,
-      },
+      headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify(data),
     });
     return res.json();
@@ -181,10 +199,87 @@ const api = {
   // Dashboard
   getDashboard: async () => {
     const res = await fetch(`${BASE_URL}/dashboard/coordinator/`, {
-      headers: { Authorization: `Bearer ${getToken()}` },
+      headers: getAuthHeaders(),
     });
     return res.json();
   },
+
+  // Release 2 workflow
+  getStudentWorkflowOverview: async () => {
+    const res = await fetch(`${BASE_URL}/workflow/student/overview/`, {
+      headers: getAuthHeaders(),
+    });
+    return res.json();
+  },
+
+  saveStudentLogbook: async (data) => {
+    const res = await fetch(`${BASE_URL}/workflow/student/logbooks/`, {
+      method: 'POST',
+      headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify(data),
+    });
+    return res.json();
+  },
+
+  saveStudentFinalReport: async (formData) => {
+    const res = await fetch(`${BASE_URL}/workflow/student/final-report/`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: formData,
+    });
+    return res.json();
+  },
+
+  getSupervisorWorkflowOverview: async () => {
+    const res = await fetch(`${BASE_URL}/workflow/supervisor/overview/`, {
+      headers: getAuthHeaders(),
+    });
+    return res.json();
+  },
+
+  saveIndustrialSupervisorReport: async (formData) => {
+    const res = await fetch(`${BASE_URL}/workflow/supervisor/industrial-report/`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: formData,
+    });
+    return res.json();
+  },
+
+  saveUniversitySupervisorAssessment: async (data) => {
+    const res = await fetch(`${BASE_URL}/workflow/supervisor/university-assessment/`, {
+      method: 'POST',
+      headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify(data),
+    });
+    return res.json();
+  },
+
+  getCoordinatorWorkflowOverview: async () => {
+    const res = await fetch(`${BASE_URL}/workflow/coordinator/overview/`, {
+      headers: getAuthHeaders(),
+    });
+    return res.json();
+  },
+
+  getCoordinatorWorkflowStudents: async () => {
+    const res = await fetch(`${BASE_URL}/workflow/coordinator/students/`, {
+      headers: getAuthHeaders(),
+    });
+    return res.json();
+  },
+
+  sendWorkflowReminders: async () => {
+    const res = await fetch(`${BASE_URL}/workflow/coordinator/reminders/`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+    });
+    return res.json();
+  },
+
+  downloadGradesCsv: async () => downloadFile('/workflow/coordinator/export/grades.csv', 'iams-grades.csv'),
+  downloadGradesPdf: async () => downloadFile('/workflow/coordinator/export/grades.pdf', 'iams-grades.pdf'),
+  resolveMediaUrl,
 };
 
 export default api;

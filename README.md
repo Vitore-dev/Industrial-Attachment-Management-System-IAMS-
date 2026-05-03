@@ -126,13 +126,13 @@ Frontend URL:
 
 ## 8. Student Registration Flow
 
-Students now register for industrial attachment through the simulated ASAS student management portal, then sign in to IAMS and complete their profile inside the system.
+Students now register for industrial attachment through the student registration portal, then sign in to IAMS and complete their profile inside the system.
 
 That means:
 
-- student registration starts on the ASAS portal at `/asas/register`
+- student registration starts in the student registration portal at `/asas/register`
 - a student account is created with `username`, `email`, `password`, and `student_id`
-- after ASAS registration, the student is redirected to the IAMS sign-in page
+- after student registration, the student is redirected to the IAMS sign-in page
 - once signed in, the student completes the rest of the profile in the student setup page
 - the student profile keeps using the same `student_id` that was provided during attachment registration
 

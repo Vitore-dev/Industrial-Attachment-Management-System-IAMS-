@@ -30,9 +30,9 @@ export default function AsasRegister() {
     if (result.success) {
       navigate('/login', {
         state: {
-          successMessage: result.message || 'ASAS registration successful. Continue in IAMS.',
+          successMessage: result.message || 'Student registration successful. Continue in IAMS.',
           prefillUsername: form.username,
-          portalName: 'ASAS',
+          portalName: 'student_portal',
         },
       });
     } else {
@@ -44,13 +44,13 @@ export default function AsasRegister() {
     <div className="portal-shell">
       <section className="portal-panel portal-panel-accent">
         <div className="portal-header">
-          <div className="portal-mark">ASAS</div>
-          <p className="portal-label">Academic Student Administration System</p>
+          <div className="portal-mark">UB</div>
+          <p className="portal-label">Student Registration Portal</p>
         </div>
         <div className="portal-copy">
           <h1>Student attachment registration starts here.</h1>
           <p>
-            Register your attachment record in ASAS first. Once your account is created, we will
+            Register your attachment record here first. Once your account is created, we will
             transition you to IAMS to sign in and complete your profile.
           </p>
         </div>
@@ -58,7 +58,7 @@ export default function AsasRegister() {
           <div className="portal-step">
             <span>1</span>
             <div>
-              <strong>Register in ASAS</strong>
+              <strong>Create your student access</strong>
               <p>Create your student attachment account with your student ID and university email.</p>
             </div>
           </div>
@@ -66,7 +66,7 @@ export default function AsasRegister() {
             <span>2</span>
             <div>
               <strong>Transition to IAMS</strong>
-              <p>Sign in to IAMS using the same account details after ASAS registration succeeds.</p>
+              <p>Sign in to IAMS using the same account details after registration succeeds.</p>
             </div>
           </div>
           <div className="portal-step">
@@ -82,13 +82,13 @@ export default function AsasRegister() {
       <section className="portal-panel portal-panel-form">
         <div className="portal-form-header">
           <div>
-            <div className="auth-pill auth-pill-alt">ASAS Student Portal</div>
+            <div className="auth-pill auth-pill-alt">Student Registration</div>
             <h2>Register for industrial attachment</h2>
           </div>
           <Link to="/login" className="portal-link">I already have an account</Link>
         </div>
         <p className="auth-subtitle portal-subtitle">
-          After this step, ASAS will send you to IAMS to sign in and complete your profile.
+          After this step, you will move into IAMS to sign in and complete your profile.
         </p>
         {error && <div className="auth-error">{error}</div>}
         <form onSubmit={handleSubmit}>
@@ -149,7 +149,7 @@ export default function AsasRegister() {
             </small>
           </div>
           <button type="submit" className="auth-btn auth-btn-alt" disabled={loading}>
-            {loading ? 'Submitting to ASAS...' : 'Register in ASAS'}
+            {loading ? 'Submitting registration...' : 'Complete student registration'}
           </button>
         </form>
         <div className="portal-footnote">
